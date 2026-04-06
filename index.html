@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#C4707A">
 <title>수원 혼주한복 업체 조사 보고서</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -338,6 +341,64 @@
   }
   .gallery-placeholder:hover { transform: scale(1.04); }
   .gallery-placeholder .gp-icon { font-size: 1.6rem; }
+
+  /* ===== Mobile (iPhone) ===== */
+  @media (max-width: 480px) {
+    body { font-size: 14px; }
+
+    .hero { padding: 48px 16px 32px; padding-top: calc(48px + env(safe-area-inset-top)); }
+    .hero h1 { font-size: 1.5rem; }
+    .hero .subtitle { font-size: 0.88rem; }
+    .hero .meta { gap: 8px; font-size: 0.75rem; }
+    .hero .meta span { padding: 3px 10px; }
+
+    .container { padding: 0 12px; }
+
+    #map { height: 320px; border-radius: 12px; }
+
+    .section-header { margin-bottom: 16px; }
+    .section-header h2 { font-size: 1.15rem; }
+
+    /* Table: card style on mobile */
+    table { font-size: 0.78rem; }
+    thead th { padding: 10px 10px; font-size: 0.72rem; }
+    tbody td { padding: 9px 10px; }
+
+    /* Shop cards */
+    .shop-top { padding: 18px 16px 0; }
+    .shop-name { font-size: 1.05rem; }
+    .shop-name .sub { font-size: 0.72rem; }
+    .shop-info { padding: 12px 16px; gap: 4px 16px; font-size: 0.82rem; }
+    .shop-body { padding: 16px 16px 20px; }
+
+    .detail-list li { font-size: 0.82rem; }
+
+    .review-inline { gap: 6px; margin-top: 12px; }
+    .review-tag { font-size: 0.73rem; padding: 4px 10px; }
+
+    .review-links { gap: 6px; }
+    .review-links a { font-size: 0.73rem; padding: 5px 10px; }
+
+    /* Gallery */
+    .shop-gallery { padding: 0 16px 8px; gap: 8px; }
+    .shop-gallery img { width: 130px; height: 170px; border-radius: 8px; }
+    .gallery-placeholder { width: 130px; height: 170px; font-size: 0.73rem; }
+
+    /* Guide section */
+    .type-cards { gap: 10px; }
+    .type-card { padding: 18px; }
+    .type-price { font-size: 1.1rem; }
+    .body-card { padding: 14px; }
+    .body-card h4 { font-size: 0.85rem; }
+    .body-card p { font-size: 0.8rem; }
+
+    .cost-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cost-item { padding: 10px 12px; }
+
+    .checklist li { font-size: 0.82rem; gap: 8px; }
+
+    footer { padding: 28px 16px; padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  }
 
   /* Leaflet popup */
   .leaflet-popup-content-wrapper { border-radius: 10px !important; }
