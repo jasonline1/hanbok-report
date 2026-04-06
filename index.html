@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수원 혼주한복 업체 조사 보고서</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
+
+  :root {
+    --rose: #C4707A;
+    --rose-light: #E8B4B8;
+    --rose-pale: #FDF2F3;
+    --gold: #B8860B;
+    --gold-light: #D4A843;
+    --gold-pale: #FBF6EC;
+    --navy: #2C3E50;
+    --navy-light: #34495E;
+    --sage: #7C9A82;
+    --sage-light: #A8C5AE;
+    --sage-pale: #F0F5F1;
+    --cream: #FEFCF8;
+    --warm-gray: #6B6560;
+    --light-gray: #F5F3F0;
+    --border: #E8E4DF;
+    --shadow: rgba(44, 62, 80, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--cream);
+    color: var(--navy);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-light) 50%, var(--gold-light) 100%);
+    padding: 60px 20px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 2.2rem; font-weight: 700; color: white;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    margin-bottom: 8px; letter-spacing: -0.5px;
+  }
+  .hero .subtitle { font-size: 1rem; color: rgba(255,255,255,0.9); font-weight: 300; }
+  .hero .meta {
+    margin-top: 16px; display: flex; justify-content: center; gap: 16px;
+    font-size: 0.82rem; color: rgba(255,255,255,0.8); flex-wrap: wrap;
+  }
+  .hero .meta span {
+    background: rgba(255,255,255,0.18); padding: 4px 14px; border-radius: 20px;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  /* Alert */
+  .alert {
+    margin: -24px auto 32px; max-width: 960px; padding: 16px 24px;
+    background: white; border-left: 4px solid var(--gold); border-radius: 8px;
+    box-shadow: 0 4px 24px var(--shadow); position: relative; z-index: 2;
+    font-size: 0.9rem;
+  }
+  .alert strong { color: var(--gold); }
+
+  /* Section */
+  section { margin-bottom: 48px; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px; padding-bottom: 10px; border-bottom: 2px solid var(--border);
+  }
+  .section-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .section-icon.rose { background: var(--rose-pale); }
+  .section-icon.sage { background: var(--sage-pale); }
+  .section-icon.gold { background: var(--gold-pale); }
+  .section-header h2 {
+    font-family: 'Noto Serif KR', serif; font-size: 1.4rem; font-weight: 600;
+  }
+
+  /* Map */
+  #map {
+    width: 100%; height: 480px; border-radius: 16px;
+    box-shadow: 0 4px 24px var(--shadow); margin-bottom: 12px;
+  }
+  .map-legend {
+    display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: var(--warm-gray);
+    margin-bottom: 8px; align-items: center;
+  }
+  .map-legend .dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px;
+  }
+
+  /* Comparison Table */
+  .table-wrapper {
+    overflow-x: auto; border-radius: 12px; box-shadow: 0 2px 16px var(--shadow);
+  }
+  table { width: 100%; border-collapse: collapse; background: white; font-size: 0.84rem; }
+  thead th {
+    background: var(--navy); color: white; padding: 12px 14px; text-align: left;
+    font-weight: 500; font-size: 0.78rem; white-space: nowrap;
+  }
+  thead th:first-child { border-radius: 12px 0 0 0; }
+  thead th:last-child { border-radius: 0 12px 0 0; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--light-gray); }
+  tbody tr:hover { background: var(--rose-pale); }
+  .stars { color: var(--gold); letter-spacing: 1px; }
+  .badge {
+    font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+  }
+  .badge-rose { background: var(--rose-pale); color: var(--rose); }
+  .badge-sage { background: var(--sage-pale); color: var(--sage); }
+  .badge-gold { background: var(--gold-pale); color: var(--gold); }
+  .badge-gray { background: var(--light-gray); color: var(--warm-gray); }
+
+  /* Shop Card — redesigned */
+  .shop-card {
+    background: white; border-radius: 16px; box-shadow: 0 2px 16px var(--shadow);
+    margin-bottom: 24px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .shop-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(44,62,80,0.12); }
+  .shop-top {
+    padding: 24px 28px 0; display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  }
+  .shop-name {
+    font-family: 'Noto Serif KR', serif; font-size: 1.25rem; font-weight: 700; color: var(--navy);
+  }
+  .shop-name .sub {
+    font-family: 'Noto Sans KR', sans-serif; font-size: 0.78rem; font-weight: 400;
+    color: var(--warm-gray); display: block; margin-top: 2px;
+  }
+
+  /* Inline info row */
+  .shop-info {
+    padding: 16px 28px; display: flex; flex-wrap: wrap; gap: 6px 24px;
+    font-size: 0.88rem; color: var(--navy-light); border-bottom: 1px solid var(--border);
+  }
+  .shop-info .info-piece {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .shop-info .info-piece .icon {
+    font-size: 0.9rem; opacity: 0.6; width: 18px; text-align: center; flex-shrink: 0;
+  }
+  .shop-info a { color: var(--rose); text-decoration: none; }
+  .shop-info a:hover { text-decoration: underline; }
+
+  .shop-body { padding: 20px 28px 24px; }
+
+  .detail-cols {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  @media (max-width: 640px) { .detail-cols { grid-template-columns: 1fr; } }
+
+  .detail-section { margin-bottom: 4px; }
+  .detail-title {
+    font-size: 0.78rem; font-weight: 600; color: var(--rose);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .detail-list { list-style: none; padding: 0; }
+  .detail-list li {
+    position: relative; padding-left: 14px; margin-bottom: 3px;
+    font-size: 0.86rem; color: var(--navy-light);
+  }
+  .detail-list li::before {
+    content: ''; position: absolute; left: 0; top: 10px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--rose-light);
+  }
+
+  /* Review summary inline */
+  .review-inline {
+    display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
+  }
+  .review-tag {
+    font-size: 0.8rem; padding: 5px 14px; border-radius: 20px; white-space: nowrap;
+  }
+  .review-tag.good { background: #EEF7EF; color: #4A7C50; }
+  .review-tag.meh { background: #FFF5EB; color: #B07A3A; }
+
+  /* Review links */
+  .review-links {
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .review-links a {
+    font-size: 0.8rem; color: white; background: var(--navy-light);
+    padding: 5px 14px; border-radius: 6px; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .review-links a:hover { background: var(--rose); }
+
+  /* Warning card */
+  .warning-card {
+    background: #FFF9F0; border: 1px dashed #D4A843; border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 24px; font-size: 0.9rem; color: var(--warm-gray);
+  }
+  .warning-card strong { color: var(--gold); }
+
+  /* Tips */
+  .tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .tip-card {
+    background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 12px var(--shadow);
+  }
+  .tip-card h4 {
+    font-size: 0.95rem; font-weight: 600; color: var(--navy);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .tip-num {
+    width: 24px; height: 24px; background: var(--rose); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; flex-shrink: 0;
+  }
+  .tip-card p { font-size: 0.85rem; color: var(--navy-light); }
+
+  /* Type cards */
+  .type-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+  @media (max-width: 700px) { .type-cards { grid-template-columns: 1fr; } }
+  .type-card {
+    background: white; border-radius: 12px; padding: 22px; text-align: center;
+    box-shadow: 0 2px 12px var(--shadow); border-top: 4px solid var(--border);
+  }
+  .type-card.featured { border-top-color: var(--rose); }
+  .type-card h4 { font-family: 'Noto Serif KR', serif; font-size: 1.05rem; margin-bottom: 6px; }
+  .type-price { font-size: 1.3rem; font-weight: 700; color: var(--rose); margin-bottom: 14px; }
+  .type-details { list-style: none; padding: 0; text-align: left; font-size: 0.83rem; color: var(--navy-light); }
+  .type-details li { padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .type-details li:last-child { border-bottom: none; }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+    border-bottom: 1px solid var(--border); font-size: 0.88rem; color: var(--navy-light);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box {
+    width: 18px; height: 18px; border: 2px solid var(--rose-light);
+    border-radius: 4px; flex-shrink: 0; margin-top: 3px;
+  }
+
+  /* Body type */
+  .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  @media (max-width: 600px) { .body-grid { grid-template-columns: 1fr; } }
+  .body-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px var(--shadow); }
+  .body-card h4 { font-size: 0.9rem; font-weight: 600; color: var(--rose); margin-bottom: 6px; }
+  .body-card p { font-size: 0.83rem; color: var(--navy-light); }
+
+  /* Color chips */
+  .color-guide { display: flex; gap: 16px; margin: 14px 0; flex-wrap: wrap; }
+  .color-chip {
+    display: flex; align-items: center; gap: 10px; background: white;
+    padding: 12px 18px; border-radius: 10px; box-shadow: 0 2px 8px var(--shadow); flex: 1; min-width: 200px;
+  }
+  .color-swatch { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; }
+  .color-chip .label { font-weight: 600; font-size: 0.88rem; }
+  .color-chip .desc { font-size: 0.78rem; color: var(--warm-gray); }
+
+  /* Hidden costs */
+  .cost-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 14px 0; }
+  .cost-item {
+    background: #FFF5F5; border-radius: 8px; padding: 12px 14px; border-left: 3px solid var(--rose-light);
+  }
+  .cost-item strong { font-size: 0.83rem; color: var(--rose); display: block; margin-bottom: 2px; }
+  .cost-item span { font-size: 0.8rem; color: var(--warm-gray); }
+
+  /* Recommendation */
+  .rec-section {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    border-radius: 16px; padding: 36px; margin: 40px 0; color: white;
+  }
+  .rec-section h2 { font-family: 'Noto Serif KR', serif; font-size: 1.4rem; margin-bottom: 24px; text-align: center; }
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .rec-grid { grid-template-columns: 1fr; } .rec-section { padding: 24px 18px; } }
+  .rec-card { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; }
+  .rec-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 14px; color: var(--rose-light); }
+  .rec-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .rec-rank {
+    width: 22px; height: 22px; background: var(--rose); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .rec-name { font-weight: 600; margin-bottom: 2px; }
+  .rec-desc { font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+  .tour-box {
+    background: rgba(255,255,255,0.08); border-radius: 10px; padding: 18px;
+    margin-top: 16px; text-align: center; grid-column: 1 / -1;
+  }
+  .tour-box h3 { font-size: 0.95rem; color: var(--gold-light); margin-bottom: 10px; }
+  .tour-steps { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tour-step { background: rgba(255,255,255,0.12); padding: 7px 16px; border-radius: 8px; font-size: 0.83rem; }
+  .tour-arrow { color: var(--gold-light); font-size: 1.1rem; }
+
+  footer {
+    text-align: center; padding: 36px 20px; color: var(--warm-gray); font-size: 0.8rem;
+    border-top: 1px solid var(--border); margin-top: 40px;
+  }
+
+  /* Gallery */
+  .shop-gallery {
+    padding: 0 28px 8px; display: flex; gap: 10px; overflow-x: auto;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--rose-light) transparent;
+  }
+  .shop-gallery::-webkit-scrollbar { height: 6px; }
+  .shop-gallery::-webkit-scrollbar-thumb { background: var(--rose-light); border-radius: 3px; }
+  .shop-gallery img {
+    width: 160px; height: 200px; object-fit: cover; border-radius: 10px;
+    scroll-snap-align: start; flex-shrink: 0; cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .shop-gallery img:hover { transform: scale(1.04); }
+  .gallery-placeholder {
+    width: 160px; height: 200px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; text-decoration: none; color: var(--rose); font-size: 0.8rem;
+    font-weight: 600; transition: transform 0.2s; border: 2px dashed var(--rose-light);
+  }
+  .gallery-placeholder:hover { transform: scale(1.04); }
+  .gallery-placeholder .gp-icon { font-size: 1.6rem; }
+
+  /* Leaflet popup */
+  .leaflet-popup-content-wrapper { border-radius: 10px !important; }
+  .leaflet-popup-content { font-family: 'Noto Sans KR', sans-serif !important; font-size: 13px !important; line-height: 1.6 !important; }
+  .popup-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .popup-addr { color: #666; font-size: 12px; }
+  .popup-tel { color: var(--rose); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>수원 혼주한복 업체 조사 보고서</h1>
+    <p class="subtitle">어머님을 위한 한복, 꼼꼼하게 비교하고 현명하게 선택하기</p>
+    <div class="meta">
+      <span>2026.04.06</span>
+      <span>4개 업체 조사</span>
+      <span>혼주(어머님) 한복</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+
+<!-- ===== 1. 지도 ===== -->
+<section>
+  <div class="section-header">
+    <div class="section-icon rose">&#128205;</div>
+    <h2>업체 위치 지도</h2>
+  </div>
+  <div id="map"></div>
+</section>
+
+<!-- ===== 2. 비교 요약표 ===== -->
+<section>
+  <div class="section-header">
+    <div class="section-icon sage">&#128202;</div>
+    <h2>업체 비교 요약표</h2>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>업체명</th>
+          <th>대여 가격</th>
+          <th>피팅비</th>
+          <th>리뷰</th>
+          <th>휴무</th>
+          <th>핵심 특징</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>채움/국현우리옷</strong></td>
+          <td>25~45만</td>
+          <td>확인필요</td>
+          <td>소수 긍정</td>
+          <td>화</td>
+          <td>풀세트 구성, 디테일 상담</td>
+        </tr>
+        <tr>
+          <td><strong>테힐라한복</strong></td>
+          <td>25만~</td>
+          <td><strong>무료</strong></td>
+          <td><span class="stars">&#9733;</span> 5.0 (94건)</td>
+          <td>연중무휴</td>
+          <td><span class="badge badge-rose">인지도1위</span> 전국 16개 체인</td>
+        </tr>
+        <tr>
+          <td><strong>우리옷길쌈</strong></td>
+          <td>40만+ 추정</td>
+          <td>확인필요</td>
+          <td>소수</td>
+          <td>월</td>
+          <td><span class="badge badge-gold">51년전통</span> 고급 단아한 스타일</td>
+        </tr>
+        <tr>
+          <td><strong>메리드메리</strong></td>
+          <td>합리적</td>
+          <td>3.3만 (계약시 면제)</td>
+          <td>긍정적</td>
+          <td>월</td>
+          <td><span class="badge badge-sage">가성비</span> 원스톱, 배달/수거</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 3. 각 업체 상세 ===== -->
+<section>
+  <div class="section-header">
+    <div class="section-icon rose">&#127979;</div>
+    <h2>업체별 상세 정보</h2>
+  </div>
+
+  <!-- 채움/국현 -->
+  <div class="shop-card">
+    <div class="shop-top">
+      <div class="shop-name">채움한복 / 국현우리옷 수원점 <span class="sub">동일 업체 &mdash; 두 이름 모두 사용</span></div>
+    </div>
+    <div class="shop-info">
+      <span class="info-piece"><span class="icon">&#128205;</span> 수원시 권선구 경수대로 365, 2층</span>
+      <span class="info-piece"><span class="icon">&#128222;</span> 0507-1440-0090 / 031-232-1406</span>
+      <span class="info-piece"><span class="icon">&#128336;</span> 11:00~19:00 (화 휴무)</span>
+      <span class="info-piece"><span class="icon">&#127909;</span> <a href="https://www.instagram.com/guk.hyeon.hanbok.official/" target="_blank">@guk.hyeon.hanbok.official</a></span>
+      <span class="info-piece"><span class="icon">&#128663;</span> 주차 6대 (공유)</span>
+      <span class="info-piece"><span class="icon">&#128203;</span> 완전 예약제 (시간당 2팀)</span>
+    </div>
+    <div class="shop-body">
+      <div class="detail-cols">
+        <div class="detail-section">
+          <div class="detail-title">가격 & 조건</div>
+          <ul class="detail-list">
+            <li>대여 1벌 <strong>30만원+</strong> (원단별 25~45만원대)</li>
+            <li>계약금 10만원 (부가세 별도)</li>
+            <li>포함: 속치마, 속바지, 적삼, 버선, 노리개, 가방, 신발</li>
+            <li>후기 작성 시 귀걸이 추가 대여</li>
+          </ul>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">서비스 특징</div>
+          <ul class="detail-list">
+            <li>30년+ 경력 담당자 색상/궁합 디테일 추천</li>
+            <li>키 차이 고려한 굽 높이, 발 사이즈 체크</li>
+            <li>한복 착용법/주의사항 꼼꼼 안내</li>
+            <li>식 전날 수령 &rarr; 식 후 반납</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shop-gallery">
+        <img src="https://brandinginlife.com/wp-content/uploads/2024/02/output_1431559011-1138x1024.jpeg" alt="국현우리옷 혼주한복 1" onerror="this.style.display='none'">
+        <img src="https://brandinginlife.com/wp-content/uploads/2024/02/output_1467365597-1204x1024.jpeg" alt="국현우리옷 혼주한복 2" onerror="this.style.display='none'">
+        <img src="https://brandinginlife.com/wp-content/uploads/2024/02/output_4183190729-1295x1024.jpeg" alt="국현우리옷 혼주한복 3" onerror="this.style.display='none'">
+        <a class="gallery-placeholder" href="https://www.instagram.com/guk.hyeon.hanbok.official/" target="_blank"><span class="gp-icon">&#128248;</span>더 보기</a>
+      </div>
+      <div class="review-inline">
+        <span class="review-tag good">친절한 상담</span>
+        <span class="review-tag good">디테일한 스타일링</span>
+        <span class="review-tag good">풀세트 구성</span>
+        <span class="review-tag good">양가 부모님 편안한 분위기</span>
+        <span class="review-tag meh">주차 한정적</span>
+        <span class="review-tag meh">온라인 리뷰 적음</span>
+      </div>
+      <div class="review-links">
+        <a href="https://brandinginlife.com/%EA%B2%B0%ED%98%BC%EC%A4%80%EB%B9%84-%ED%98%BC%EC%A3%BC%ED%95%9C%EB%B3%B5-%EC%88%98%EC%9B%90-%ED%98%B8%ED%85%94%EB%A6%AC%EC%B8%A0-%EC%A0%9C%ED%9C%B4-%ED%98%BC%EC%A3%BC-%ED%95%9C%EB%B3%B5-%EB%8C%80/" target="_blank">&#128196; 고객 후기</a>
+        <a href="http://www.gukhyeon.com/gnu5/" target="_blank">&#127968; 공식 홈페이지</a>
+        <a href="https://www.instagram.com/guk.hyeon.hanbok.official/" target="_blank">&#128247; 인스타그램</a>
+        <a href="http://www.gukhyeon.com/gnu5/bbs/board.php?bo_table=review_g" target="_blank" style="background:var(--rose);">&#128248; 한복 갤러리</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 테힐라 -->
+  <div class="shop-card">
+    <div class="shop-top">
+      <div class="shop-name">테힐라한복 수원점 <span class="sub">전국 16개 지점 &bull; 한복 브랜드 인지도 1위 &bull; 리뷰 94건 5.0점</span></div>
+      <span class="badge badge-rose">리뷰 94건 / 5점</span>
+    </div>
+    <div class="shop-info">
+      <span class="info-piece"><span class="icon">&#128205;</span> 수원시 팔달구 인계동 951-10 미소찬빌딩 2층</span>
+      <span class="info-piece"><span class="icon">&#128222;</span> 031-234-5563 / 1577-8423</span>
+      <span class="info-piece"><span class="icon">&#128336;</span> 10:00~19:00 <strong>(연중무휴)</strong></span>
+      <span class="info-piece"><span class="icon">&#127909;</span> <a href="https://www.instagram.com/teahilla_hanbok/" target="_blank">@teahilla_hanbok</a> (15K+)</span>
+      <span class="info-piece"><span class="icon">&#127760;</span> <a href="https://www.teahillashop.com/" target="_blank">teahillashop.com</a></span>
+    </div>
+    <div class="shop-body">
+      <div class="detail-cols">
+        <div class="detail-section">
+          <div class="detail-title">가격 & 조건</div>
+          <ul class="detail-list">
+            <li>대여 <strong>25만원대~</strong></li>
+            <li>프리미엄 갈래치마 약 50만원대</li>
+            <li>웨딩북 예약 캐시백 수원점 3%</li>
+            <li>100% 자체 디자인/제작 (중간마진 없음)</li>
+            <li><strong>무료 피팅</strong></li>
+          </ul>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">서비스 특징</div>
+          <ul class="detail-list">
+            <li>전국 16개 지점 &rarr; 양가 각각 가까운 곳 방문</li>
+            <li>지점 간 정보 공유 (A지점 선택 &rarr; B지점 전달)</li>
+            <li>대여 + 맞춤 + 맞춤대여 3가지 서비스</li>
+            <li>유튜브 구독자 1위 한복 브랜드</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shop-gallery">
+        <img src="https://d31gm4xoou1wz2.cloudfront.net/review/d202208/d20220829/67F01A61-15C2-44B9-9BB7-0F2B5A7C2B20-1747-00000035D7239B4C.jpeg" alt="테힐라한복 혼주한복 1" onerror="this.style.display='none'">
+        <a class="gallery-placeholder" href="https://www.instagram.com/teahilla_hanbok/" target="_blank"><span class="gp-icon">&#128248;</span>인스타에서<br>더 보기</a>
+        <a class="gallery-placeholder" href="https://www.teahillashop.com/" target="_blank"><span class="gp-icon">&#127968;</span>공식 사이트<br>갤러리</a>
+      </div>
+      <div class="review-inline">
+        <span class="review-tag good">매우 친절</span>
+        <span class="review-tag good">원단/품질 우수</span>
+        <span class="review-tag good">고급스러운 디자인</span>
+        <span class="review-tag good">합리적 가격</span>
+        <span class="review-tag good">전국 접근성</span>
+        <span class="review-tag meh">종류 더 다양했으면 (일부)</span>
+      </div>
+      <div class="review-links">
+        <a href="https://www.weddingbook.com/partner/cc0d7327-4589-11ef-9a7b-023379a10fd2" target="_blank">&#128196; 웨딩북 리뷰 94건</a>
+        <a href="https://www.teahillashop.com/" target="_blank">&#127968; 공식 홈페이지</a>
+        <a href="https://www.instagram.com/teahilla_hanbok/" target="_blank">&#128247; 인스타그램</a>
+        <a href="https://www.teahillashop.com/" target="_blank" style="background:var(--rose);">&#128248; 한복 갤러리</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 우리옷길쌈 -->
+  <div class="shop-card">
+    <div class="shop-top">
+      <div class="shop-name">우리옷길쌈 수원점 <span class="sub">51년 전통 &bull; 3대째 운영 &bull; 120평 대형 매장 &bull; KBS 드라마 협찬</span></div>
+      <span class="badge badge-gold">51년 전통</span>
+    </div>
+    <div class="shop-info">
+      <span class="info-piece"><span class="icon">&#128205;</span> 수원시 권선구 효원로 104</span>
+      <span class="info-piece"><span class="icon">&#128222;</span> 031-898-8801</span>
+      <span class="info-piece"><span class="icon">&#128336;</span> 평일 11:00~19:30 / 주말 10:00~20:00 (월 휴무)</span>
+      <span class="info-piece"><span class="icon">&#127760;</span> <a href="https://www.gilsam.net" target="_blank">gilsam.net</a></span>
+    </div>
+    <div class="shop-body">
+      <div class="detail-cols">
+        <div class="detail-section">
+          <div class="detail-title">가격 & 조건</div>
+          <ul class="detail-list">
+            <li>수원 한복집 중 <strong>가장 비싼 편</strong></li>
+            <li>다른 수원 한복점 대비 높은 가격대</li>
+            <li>구체적 가격 웹 미공개</li>
+          </ul>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">서비스 특징</div>
+          <ul class="detail-list">
+            <li>원단구매~봉제~품질관리 <strong>전 공정 자체 처리</strong></li>
+            <li>30년+ 경력 베테랑 디렉터 직접 상담</li>
+            <li>차분하고 고급스러운, 단아한 스타일</li>
+            <li>KBS 드라마 한복 협찬 이력</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shop-gallery">
+        <a class="gallery-placeholder" href="https://www.gilsam.net" target="_blank"><span class="gp-icon">&#128248;</span>공식 홈페이지<br>갤러리</a>
+      </div>
+      <div class="review-inline">
+        <span class="review-tag good">120평 넓고 깨끗한 매장</span>
+        <span class="review-tag good">직원 직업의식 우수</span>
+        <span class="review-tag good">고급스러운 품질</span>
+        <span class="review-tag meh">가격 비싼 편</span>
+        <span class="review-tag meh">온라인 정보 부족</span>
+      </div>
+      <div class="review-links">
+        <a href="https://www.gilsam.net" target="_blank">&#127968; 공식 홈페이지</a>
+        <a href="https://www.gilsam.net/blank-3" target="_blank" style="background:var(--rose);">&#128248; 한복 갤러리</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메리드메리 -->
+  <div class="shop-card" style="border-left: 4px solid var(--sage);">
+    <div class="shop-top">
+      <div class="shop-name">메리드메리 (메리드한복) <span class="sub">추가 발견 &mdash; 가성비 추천</span></div>
+      <span class="badge badge-sage">가성비 추천</span>
+    </div>
+    <div class="shop-info">
+      <span class="info-piece"><span class="icon">&#128205;</span> 수원시 팔달구 인계로 120 스마트타워 2층</span>
+      <span class="info-piece"><span class="icon">&#128222;</span> 010-7204-7772</span>
+      <span class="info-piece"><span class="icon">&#128336;</span> 월요일 휴무</span>
+      <span class="info-piece"><span class="icon">&#127909;</span> <a href="https://www.instagram.com/merry_de_hanbok/" target="_blank">@merry_de_hanbok</a></span>
+      <span class="info-piece"><span class="icon">&#128663;</span> 지하 주차 가능</span>
+    </div>
+    <div class="shop-body">
+      <div class="detail-cols">
+        <div class="detail-section">
+          <div class="detail-title">가격 & 조건</div>
+          <ul class="detail-list">
+            <li><strong>매우 합리적</strong>이라는 평가</li>
+            <li>피팅비 3벌 3.3만원 (계약 시 면제)</li>
+            <li>플래너 없이 직접 진행하면 더 저렴</li>
+          </ul>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">서비스 특징</div>
+          <ul class="detail-list">
+            <li><strong>메이크업+드레스+한복 원스톱</strong></li>
+            <li>실장 상담 &rarr; 측정 &rarr; 카탈로그 &rarr; 3세트 피팅</li>
+            <li>후기 작성 시 뒤꽂이 서비스</li>
+            <li>이비스 웨딩홀: <strong>배달+수거</strong> 서비스</li>
+            <li>2~3시간 내 완료</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shop-gallery">
+        <img src="https://blog.kakaocdn.net/dna/bK5VhL/btsOZf7C9Ln/AAAAAAAAAAAAAAAAAAAAAKMgAy-sfJ7G4W-7jCoShJH9msZEcZt3s81h4kad8jkj/img.png?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&allow_ip=&allow_referer=&signature=0brvT8mXlfl2xQjcf1TwJLZl4kA%3D" alt="메리드메리 한복 1" onerror="this.style.display='none'">
+        <img src="https://blog.kakaocdn.net/dna/5vArd/btsOYGLEEHl/AAAAAAAAAAAAAAAAAAAAAPS3GTGGCRFrmW6oqx6FS8QFjGiFT83D2oamw5RReo_3/img.png?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&allow_ip=&allow_referer=&signature=i%2FBU%2B5%2Fex%2FSDFvnGvHOyUx2ct%2BU%3D" alt="메리드메리 한복 2" onerror="this.style.display='none'">
+        <img src="https://blog.kakaocdn.net/dna/b1bPS7/btsOYGx7CoZ/AAAAAAAAAAAAAAAAAAAAAAp7a7UM5cuCMz5xIU0hNFpTfzHYFh7leSu6l81vK7zv/img.png?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&allow_ip=&allow_referer=&signature=3Tn2jcE4d84r2gDvxrJKQoElvos%3D" alt="메리드메리 한복 3" onerror="this.style.display='none'">
+        <a class="gallery-placeholder" href="https://www.instagram.com/merry_de_hanbok/" target="_blank"><span class="gp-icon">&#128248;</span>더 보기</a>
+      </div>
+      <div class="review-inline">
+        <span class="review-tag good">가성비 최고</span>
+        <span class="review-tag good">원스톱 편리</span>
+        <span class="review-tag good">친절한 스타일링</span>
+        <span class="review-tag good">배달/수거</span>
+      </div>
+      <div class="review-links">
+        <a href="https://mimimem.com/entry/%EC%88%98%EC%9B%90-%EB%A9%94%EB%A6%AC%EB%93%9C%EB%A9%94%EB%A6%AC-%ED%98%BC%EC%A3%BC-%ED%95%9C%EB%B3%B5-%ED%94%BC%ED%8C%85-%EB%B0%8F-%EA%B3%84%EC%95%BD-%ED%9B%84%EA%B8%B0" target="_blank">&#128196; 피팅 & 계약 후기</a>
+        <a href="https://www.instagram.com/merry_de_hanbok/" target="_blank">&#128247; 인스타그램</a>
+        <a href="https://www.instagram.com/merry_de_hanbok/" target="_blank" style="background:var(--rose);">&#128248; 한복 갤러리 (인스타)</a>
+      </div>
+    </div>
+  </div>
+
+
+</section>
+
+<!-- ===== 4. 가이드 ===== -->
+<section>
+  <div class="section-header">
+    <div class="section-icon gold">&#128161;</div>
+    <h2>혼주한복 준비 가이드</h2>
+  </div>
+
+  <h3 style="font-family:'Noto Serif KR',serif; font-size:1.1rem; margin-bottom:14px;">대여 vs 맞춤 vs 맞춤대여</h3>
+  <div class="type-cards">
+    <div class="type-card">
+      <h4>일반 대여</h4>
+      <div class="type-price">15~30만원</div>
+      <ul class="type-details">
+        <li>준비기간: 1~2주</li><li>핏: 100% 안 맞을 수 있음</li>
+        <li>활용: 1회 (반납)</li><li>관리: 불필요</li>
+      </ul>
+    </div>
+    <div class="type-card featured">
+      <h4>맞춤 대여</h4>
+      <div class="type-price">50~60만원</div>
+      <ul class="type-details">
+        <li>준비기간: 1~2주</li><li>핏: 주요 사이즈 조절</li>
+        <li>활용: 1회 (반납)</li><li>장점: 대여+맞춤 결합</li>
+      </ul>
+    </div>
+    <div class="type-card">
+      <h4>완전 맞춤</h4>
+      <div class="type-price">70~100만원+</div>
+      <ul class="type-details">
+        <li>준비기간: 30~40일+</li><li>핏: 완벽 맞춤</li>
+        <li>활용: 여러 번 (명절 등)</li><li>관리: 직접 보관</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-family:'Noto Serif KR',serif; font-size:1.1rem; margin:24px 0 12px;">체형별 선택 가이드</h3>
+  <div class="body-grid">
+    <div class="body-card"><h4>키 크고 마른 체형</h4><p>저고리 길이 길게, 풍성한 치마, 차분한 색상, 당의 추천</p></div>
+    <div class="body-card"><h4>키 크고 통통한 체형</h4><p>축소 색상 선택, 꼭 맞는 저고리, 직선 소매</p></div>
+    <div class="body-card"><h4>키 작고 마른 체형</h4><p>화사한 색, 짧은 저고리, 긴 치마, 동일 톤 매치</p></div>
+    <div class="body-card"><h4>키 작고 통통한 체형</h4><p>어두운 저고리+밝은 치마, 삼회장저고리, 넓은 주름, 긴 고름</p></div>
+  </div>
+
+  <h3 style="font-family:'Noto Serif KR',serif; font-size:1.1rem; margin:24px 0 12px;">체크리스트</h3>
+  <div style="background:white; border-radius:12px; padding:20px 24px; box-shadow:0 2px 12px var(--shadow);">
+    <ul class="checklist">
+      <li><span class="check-box"></span><strong>포함 항목:</strong> 속치마, 속바지, 버선, 신발, 가방, 노리개, 머리장식</li>
+      <li><span class="check-box"></span><strong>피팅비:</strong> 계약 시 면제되는지, 별도 비용인지</li>
+      <li><span class="check-box"></span><strong>추가 피팅:</strong> 1차 후 수정 가능 여부</li>
+      <li><span class="check-box"></span><strong>파손/오염:</strong> 배상 정책 확인</li>
+      <li><span class="check-box"></span><strong>반납:</strong> 기한, 방법, 택배 가능 여부</li>
+      <li><span class="check-box"></span><strong>웨딩홀 제휴:</strong> 예식장 제휴 업체 확인</li>
+      <li><span class="check-box"></span><strong>양가 색상 조율:</strong> 겹치지 않도록</li>
+      <li><span class="check-box"></span><strong>편안함 우선:</strong> 예뻐도 불편하면 비추</li>
+    </ul>
+  </div>
+
+  <h3 style="font-family:'Noto Serif KR',serif; font-size:1.1rem; margin:24px 0 12px;">숨겨진 비용 주의</h3>
+  <div class="cost-grid">
+    <div class="cost-item"><strong>피팅비</strong><span>1~3만원, 계약 시 면제 가능</span></div>
+    <div class="cost-item"><strong>액세서리</strong><span>노리개, 뒤꽂이 별도 청구</span></div>
+    <div class="cost-item"><strong>파손 배상</strong><span>계약서 규정 반드시 확인</span></div>
+    <div class="cost-item"><strong>연장/성수기</strong><span>추가 요금 발생 가능</span></div>
+  </div>
+
+</section>
+
+</div>
+
+<footer>수원 혼주한복 업체 조사 보고서 &bull; 2026.04.06 &bull; 가격/서비스는 변동 가능, 방문 전 재확인 필수</footer>
+
+<script>
+// Map initialization
+const map = L.map('map', { scrollWheelZoom: false }).setView([37.2560, 127.0320], 13);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO',
+  maxZoom: 18,
+}).addTo(map);
+
+// Home icon (star)
+const homeIcon = L.divIcon({
+  className: '',
+  html: '<div style="font-size:22px;text-shadow:0 1px 4px rgba(0,0,0,0.3);line-height:1;">&#11088;</div>',
+  iconSize: [22, 22], iconAnchor: [11, 11],
+});
+
+// Shop icon (rose)
+const shopIcon = L.divIcon({
+  className: '',
+  html: '<div style="background:#C4707A;width:14px;height:14px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+  iconSize: [14, 14], iconAnchor: [7, 7],
+});
+
+// Home marker
+L.marker([37.2456, 127.0359], { icon: homeIcon }).addTo(map);
+
+// Shop data
+const shops = [
+  {
+    name: '채움한복 / 국현우리옷',
+    lat: 37.2580, lng: 127.0270,
+    addr: '수원시 권선구 경수대로 365, 2층',
+    tel: '0507-1440-0090',
+    link: 'https://www.instagram.com/guk.hyeon.hanbok.official/'
+  },
+  {
+    name: '테힐라한복 수원점',
+    lat: 37.2682, lng: 127.0294,
+    addr: '수원시 팔달구 인계동 951-10',
+    tel: '031-234-5563',
+    link: 'https://www.teahillashop.com/'
+  },
+  {
+    name: '우리옷길쌈',
+    lat: 37.2605, lng: 127.0100,
+    addr: '수원시 권선구 효원로 104',
+    tel: '031-898-8801',
+    link: 'https://www.gilsam.net'
+  },
+{
+    name: '메리드메리',
+    lat: 37.2673, lng: 127.0306,
+    addr: '수원시 팔달구 인계로 120',
+    tel: '010-7204-7772',
+    link: 'https://www.instagram.com/merry_de_hanbok/'
+  },
+];
+
+const bounds = [[37.2456, 127.0359]];
+
+shops.forEach(s => {
+  bounds.push([s.lat, s.lng]);
+  L.marker([s.lat, s.lng], { icon: shopIcon })
+    .addTo(map)
+    .bindPopup(
+      '<div class="popup-name">' + s.name + '</div>' +
+      '<div class="popup-addr">' + s.addr + '</div>' +
+      '<div class="popup-tel">' + s.tel + '</div>' +
+      '<div style="margin-top:6px;"><a href="' + s.link + '" target="_blank" style="color:#C4707A;font-size:12px;">자세히 보기 &rarr;</a></div>'
+    );
+});
+
+map.fitBounds(bounds, { padding: [40, 40] });
+</script>
+
+</body>
+</html>
